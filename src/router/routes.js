@@ -1,10 +1,29 @@
 
 const routes = [
+  { path: "/", redirect: "/auth/login" },
   {
-    path: '/',
+    path: "/auth/",
+    component: () => import("layouts/OutLayout.vue"),
+    children: [
+      {
+        path: "login",
+        component: () => import("pages/Auth/Login.vue"),
+      },
+      {
+        path: "register",
+        component: () => import("pages/Auth/Register.vue"),
+      },
+    ],
+  },
+  {
+    path: '/dashboard',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: '', component: () => import('pages/Index.vue') }
+      { path: '/available-hours', component: () => import('pages/AvailableHours') },
+      { path: '/contracts', component: () => import('pages/Contracts') },
+      { path: '/services', component: () => import('pages/Services') },
+      { path: '/users', component: () => import('pages/Users') },
+      { path: '/work-shifts', component: () => import('pages/WorkShifts') },
     ]
   },
 
