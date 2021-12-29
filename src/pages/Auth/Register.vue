@@ -12,7 +12,7 @@
         </div>
         <q-card class="login-form">
           <q-card-section>
-            <q-avatar size="60px" class="avatar-login">
+            <q-avatar size="70px" class="avatar-login" color="blue">
               <img src="~assets/security.png" />
             </q-avatar>
             <div class="row no-wrap items-center">
@@ -95,7 +95,7 @@
               </q-input>
             </q-card-section>
             <q-card-actions class="q-pa-md">
-              <q-btn label="Iniciar sesión" to="/auth/login" no-caps flat />
+              <q-btn label="Iniciar Sesión" to="/auth/login" no-caps flat />
               <q-space />
               <q-btn
                 color="black"
@@ -150,14 +150,14 @@ export default defineComponent({
   background-repeat: no-repeat;
   background-size: cover;
   background-position: 50% 50%;
-  background-color: black;
+  background-color: #000;
 }
 
 .login-form {
   position: absolute;
   width: 40%;
   max-width: 600px;
-  background: rgba($color: #ffa500, $alpha: 0.9);
+  background: rgba($color: $blue-5, $alpha: 0.9);
   color: white;
 }
 

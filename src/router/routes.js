@@ -15,16 +15,17 @@ const routes = [
       },
     ],
   },
-
-
-
-  // {
-  //   path: '/',
-  //   component: () => import('layouts/MainLayout.vue'),
-  //   children: [
-  //     { path: '', component: () => import('pages/Index.vue'), meta: { requiresAuth: true, admin: false } },
-  //   ]
-  // },
+  {
+    path: '/dashboard',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      { path: '/available-hours', component: () => import('pages/AvailableHours') },
+      { path: '/contracts', component: () => import('pages/Contracts') },
+      { path: '/services', component: () => import('pages/Services') },
+      { path: '/users', component: () => import('pages/Users') },
+      { path: '/work-shifts', component: () => import('pages/WorkShifts') },
+    ]
+  },
 
   // Always leave this as last one,
   // but you can also remove it
