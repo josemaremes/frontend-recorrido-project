@@ -19,8 +19,8 @@
               <div class="col text-h6 ellipsis">CREAR CUENTA</div>
             </div>
           </q-card-section>
-          <q-form class="q-gutter-none">
-            <q-card-section>
+          <q-form class="q-gutter-none" @submit="signUp">
+            <q-card-section class="q-py-xs">
               <q-input
                 color="white"
                 bottom-slots
@@ -30,13 +30,16 @@
                 v-model="credentials.name"
                 label="Nombre"
                 lazy-rules
+                :rules="[
+                  (val) => val.length > 0 || 'Debes colocar un nombre válido',
+                ]"
               >
                 <template v-slot:prepend>
                   <q-icon color="white" name="spellcheck" size="sm" />
                 </template>
               </q-input>
             </q-card-section>
-            <q-card-section>
+            <q-card-section class="q-py-xs">
               <q-input
                 color="white"
                 bottom-slots
@@ -46,13 +49,16 @@
                 v-model="credentials.lastname"
                 label="Apellido"
                 lazy-rules
+                :rules="[
+                  (val) => val.length > 0 || 'Debes colocar un apellido válido',
+                ]"
               >
                 <template v-slot:prepend>
                   <q-icon color="white" name="spellcheck" size="sm" />
                 </template>
               </q-input>
             </q-card-section>
-            <q-card-section>
+            <q-card-section class="q-py-xs">
               <q-input
                 color="white"
                 bottom-slots
@@ -62,13 +68,20 @@
                 v-model="credentials.email"
                 label="Correo"
                 lazy-rules
+                :rules="[
+                  (val) =>
+                    val.length > 0 || 'Debes colocar un correo electrónico',
+                  (val) =>
+                    emailRegExp.test(val) ||
+                    'El formato del correo electrónico dado no es válido',
+                ]"
               >
                 <template v-slot:prepend>
                   <q-icon color="white" name="person" size="sm" />
                 </template>
               </q-input>
             </q-card-section>
-            <q-card-section>
+            <q-card-section class="q-py-xs">
               <q-input
                 color="white"
                 ref="password"
@@ -79,6 +92,11 @@
                 clearable
                 lazy-rules
                 :type="isPwd ? 'password' : 'text'"
+                :rules="[
+                  (val) =>
+                    val.length >= 6 ||
+                    'Debes colocar una contraseña de al menos 6 caracteres',
+                ]"
               >
                 <template v-slot:prepend>
                   <q-icon color="white" name="https" size="sm" />
@@ -94,15 +112,31 @@
                 </template>
               </q-input>
             </q-card-section>
+            <q-card-section class="q-py-xs">
+              <q-select
+                filled
+                v-model="credentials.role_id"
+                :options="rolesList"
+                :option-value="
+                  (opt) => (Object(opt) === opt && 'id' in opt ? opt.id : null)
+                "
+                :option-label="
+                  (opt) =>
+                    Object(opt) === opt && 'name' in opt ? opt.name : '- Null -'
+                "
+                emit-value
+                map-options
+                label="Cargo"
+                lazy-rules
+                :rules="[
+                  (val) => val || 'Debes seleccionar el cargo de la persona',
+                ]"
+              />
+            </q-card-section>
             <q-card-actions class="q-pa-md">
               <q-btn label="Iniciar Sesión" to="/auth/login" no-caps flat />
               <q-space />
-              <q-btn
-                color="black"
-                label="Crear"
-                to="/auth/login"
-                type="button"
-              />
+              <q-btn color="black" label="Crear" type="submit" />
             </q-card-actions>
           </q-form>
         </q-card>
@@ -112,24 +146,86 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, getCurrentInstance, onMounted, ref } from "vue";
 
 export default defineComponent({
   name: "Register",
   setup() {
+    const app = getCurrentInstance().appContext.config.globalProperties;
     const credentials = ref({
       name: "",
       lastname: "",
       email: "",
       password: "",
-      role_id: "",
+      role_id: null,
     });
+    const emailRegExp = new RegExp("^[^@]+@[^@]+\.[a-zA-Z]{2,}$");
     const isPwd = ref(true);
     const particleItems = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    const rolesList = ref([]);
+
+    /**
+     * Obtiene la información de los roles de los usuarios.
+     */
+    async function getRoles() {
+      try {
+        const {
+          data: { roles },
+        } = await app.$api.get("roles");
+        rolesList.value = roles;
+      } catch (error) {
+        app.$q.loading.hide();
+        console.trace(error);
+        app.$Swal.fire(
+          "Error",
+          "Hubo un error al intentar obtener la información de los roles",
+          "error"
+        );
+      }
+    }
+
+    /**
+     * Permite iniciar sesión para entrar al dashboard.
+     */
+    async function signUp() {
+      try {
+        app.$q.loading.show({
+          spinner: app.$QSpinnerGears,
+          spinnerColor: "white",
+          spinnerSize: 100,
+          messageColor: "white",
+          backgroundColor: "black",
+          message: "Data request to the server",
+        });
+
+        await app.$api.post("register", credentials.value);
+
+        app.$Swal.fire(
+          "Success",
+          "El usuario ha sido creado con éxito. Puedes hacer login de inmediato",
+          "success"
+        );
+        app.$router.push("/auth/login");
+      } catch (error) {
+        app.$q.loading.hide();
+        console.trace(error);
+        app.$Swal.fire(
+          "Error",
+          "Las credenciales otorgadas no son válidas o el usuario ingresado no se encuentra registrado",
+          "error"
+        );
+      }
+    }
+
+    onMounted(getRoles);
+
     return {
       credentials,
+      emailRegExp,
       isPwd,
       particleItems,
+      rolesList,
+      signUp,
     };
   },
 });
