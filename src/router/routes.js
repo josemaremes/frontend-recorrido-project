@@ -16,14 +16,34 @@ const routes = [
     ],
   },
   {
-    path: '/dashboard',
+    path: '',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: '/available-hours', component: () => import('pages/AvailableHours') },
-      { path: '/contracts', component: () => import('pages/Contracts') },
-      { path: '/services', component: () => import('pages/Services') },
-      { path: '/users', component: () => import('pages/Users') },
-      { path: '/work-shifts', component: () => import('pages/WorkShifts') },
+      {
+        path: '/available-hours', component: () => import('pages/AvailableHours'), meta: {
+          requiresAuth: true,
+        }
+      },
+      {
+        path: '/contracts', component: () => import('pages/Contracts'), meta: {
+          requiresAuth: true,
+        }
+      },
+      {
+        path: '/services', component: () => import('pages/Services'), meta: {
+          requiresAuth: true,
+        }
+      },
+      {
+        path: '/users', component: () => import('pages/Users'), meta: {
+          requiresAuth: true,
+        }
+      },
+      {
+        path: '/work-shifts', component: () => import('pages/WorkShifts'), meta: {
+          requiresAuth: true,
+        }
+      },
     ]
   },
 

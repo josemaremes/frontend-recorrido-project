@@ -195,7 +195,7 @@ export default defineComponent({
           spinnerSize: 100,
           messageColor: "white",
           backgroundColor: "black",
-          message: "Data request to the server",
+          message: "Registrando usuario...",
         });
 
         await app.$api.post("register", credentials.value);

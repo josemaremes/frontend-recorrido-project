@@ -89,12 +89,13 @@
 
 <script>
 import { defineComponent, getCurrentInstance, ref } from "vue";
-import { mapMutations } from 'vuex'
+import { useStore } from "vuex";
 
 export default defineComponent({
   name: "Login",
   setup() {
     const app = getCurrentInstance().appContext.config.globalProperties;
+    const store = useStore();
     const credentials = ref({
       email: "josemacloud@gmail.com",
       password: "123456",
@@ -108,21 +109,29 @@ export default defineComponent({
      */
     async function signIn() {
       try {
+        // Show componente de carga
         app.$q.loading.show({
           spinner: app.$QSpinnerGears,
           spinnerColor: "white",
           spinnerSize: 100,
           messageColor: "white",
           backgroundColor: "black",
-          message: "Data request to the server",
+          message: "Verificando credenciales...",
         });
 
+        // Obtener información de la autenticación
         const {
           data: { token, user },
         } = await app.$api.post("login", credentials.value);
-        console.log(token);
-        console.log(user);
 
+        // Guardar información en el store
+        store.commit("auth/setToken", token);
+        store.commit("auth/setUser", user);
+
+        // Redirecccionar
+        app.$router.push("/work-shifts");
+
+        // Ocultar componente de carga
         app.$q.loading.hide();
       } catch (error) {
         app.$q.loading.hide();

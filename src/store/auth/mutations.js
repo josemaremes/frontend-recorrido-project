@@ -1,11 +1,11 @@
 /**
- * Setea la información del token a null en el state de auth.
+ * Inicializa el state de auth.
  * @param {*} state
- * @param {*} token
  */
-export const removeToken = (state, token) => {
-  state.token = ''
+export const setDefaultState = (state) => {
   state.isAuthenticated = false
+  state.token = ''
+  state.user = {}
 }
 
 /**

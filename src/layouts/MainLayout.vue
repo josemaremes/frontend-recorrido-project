@@ -13,7 +13,14 @@
         <q-toolbar-title>
           Sistema Práctico de Asignación de Turnos
         </q-toolbar-title>
-        <div>Creado con Quasar v{{ $q.version }}</div>
+        <q-btn
+          color="blue-10"
+          text-color="#fff"
+          label="Cerrar Sesión"
+          size="sm"
+          @click="signOut"
+        >
+        </q-btn>
       </q-toolbar>
     </q-header>
     <q-drawer
@@ -54,11 +61,14 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, getCurrentInstance, ref } from "vue";
+import { useStore } from "vuex";
 
 export default defineComponent({
   name: "MainLayout",
   setup() {
+    const app = getCurrentInstance().appContext.config.globalProperties;
+    const store = useStore();
     const activeView = ref("Turnos Confirmados");
     const leftDrawerOpen = ref(false);
     const views = ref([
@@ -90,6 +100,15 @@ export default defineComponent({
     ]);
 
     /**
+     * Permite cerrar sesión y regresar a la vista de login.
+     */
+    async function signOut() {
+      // Actualizar valores del store y redireccionar
+      store.commit("auth/setDefaultState");
+      app.$router.push("/auth/login");
+    }
+
+    /**
      * Función que permite mostrar u ocultar la barra izzquierda del dashboard.
      */
     function toggleLeftDrawer() {
@@ -99,6 +118,7 @@ export default defineComponent({
       activeView,
       leftDrawerOpen,
       views,
+      signOut,
       toggleLeftDrawer,
     };
   },

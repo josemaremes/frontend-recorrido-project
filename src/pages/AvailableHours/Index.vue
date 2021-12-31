@@ -11,7 +11,15 @@
 </template>
 
 <script>
-export default {
+import {
+  defineComponent,
+  getCurrentInstance,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
+
+export default defineComponent({
   name: "AvailableHours",
-};
+});
 </script>
