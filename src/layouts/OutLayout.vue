@@ -8,6 +8,7 @@
       <a style="color: white" href="https://www.recorrido.cl/es"
         >Recorrido.cl</a
       >
+      para la asignación de turnos del personal actual
     </q-footer>
   </q-layout>
 </template>

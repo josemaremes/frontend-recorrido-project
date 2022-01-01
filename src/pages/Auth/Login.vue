@@ -19,8 +19,8 @@
               <div class="col text-h6 ellipsis">INICIAR SESIÓN</div>
             </div>
           </q-card-section>
-          <q-form class="q-gutter-none">
-            <q-card-section>
+          <q-form class="q-gutter-none" @submit="signIn">
+            <q-card-section class="q-py-xs">
               <q-input
                 color="white"
                 bottom-slots
@@ -29,14 +29,22 @@
                 ref="email"
                 v-model="credentials.email"
                 label="Correo"
+                type="email"
                 lazy-rules
+                :rules="[
+                  (val) =>
+                    val.length > 0 || 'Debes colocar un correo electrónico',
+                  (val) =>
+                    emailRegExp.test(val) ||
+                    'El formato del correo electrónico dado no es válido',
+                ]"
               >
                 <template v-slot:prepend>
                   <q-icon color="white" name="person" size="sm" />
                 </template>
               </q-input>
             </q-card-section>
-            <q-card-section>
+            <q-card-section class="q-py-xs">
               <q-input
                 color="white"
                 ref="password"
@@ -47,6 +55,11 @@
                 clearable
                 lazy-rules
                 :type="isPwd ? 'password' : 'text'"
+                :rules="[
+                  (val) =>
+                    val.length >= 6 ||
+                    'Debes colocar una contraseña de al menos 6 caracteres',
+                ]"
               >
                 <template v-slot:prepend>
                   <q-icon color="white" name="https" size="sm" />
@@ -65,12 +78,7 @@
             <q-card-actions class="q-pa-md">
               <q-btn label="Crear Cuenta" to="/auth/register" no-caps flat />
               <q-space />
-              <q-btn
-                color="blue-10"
-                label="Iniciar"
-                to="/dashboard"
-                type="button"
-              />
+              <q-btn color="blue-10" label="Iniciar" type="submit" />
             </q-card-actions>
           </q-form>
         </q-card>
@@ -80,21 +88,68 @@
 </template>
 
 <script>
-import { defineComponent, ref } from "vue";
+import { defineComponent, getCurrentInstance, ref } from "vue";
+import { useStore } from "vuex";
 
 export default defineComponent({
   name: "Login",
   setup() {
+    const app = getCurrentInstance().appContext.config.globalProperties;
+    const store = useStore();
     const credentials = ref({
-      email: "",
-      password: "",
+      email: "josemacloud@gmail.com",
+      password: "123456",
     });
     const isPwd = ref(true);
+    const emailRegExp = new RegExp("^[^@]+@[^@]+\.[a-zA-Z]{2,}$");
     const particleItems = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+    /**
+     * Permite iniciar sesión para entrar al dashboard.
+     */
+    async function signIn() {
+      try {
+        // Show componente de carga
+        app.$q.loading.show({
+          spinner: app.$QSpinnerGears,
+          spinnerColor: "white",
+          spinnerSize: 100,
+          messageColor: "white",
+          backgroundColor: "black",
+          message: "Verificando credenciales...",
+        });
+
+        // Obtener información de la autenticación
+        const {
+          data: { token, user },
+        } = await app.$api.post("login", credentials.value);
+
+        // Guardar información en el store
+        store.commit("auth/setToken", token);
+        store.commit("auth/setUser", user);
+
+        // Redirecccionar
+        app.$router.push("/work-shifts");
+
+        // Ocultar componente de carga
+        app.$q.loading.hide();
+      } catch (error) {
+        app.$q.loading.hide();
+        console.trace(error);
+        app.$Swal.fire(
+          "Error",
+          "Las credenciales otorgadas no son válidas o el usuario ingresado no se encuentra registrado",
+          "error"
+        );
+      }
+    }
+
     return {
       credentials,
+      emailRegExp,
       isPwd,
       particleItems,
+      signIn,
     };
   },
 });
