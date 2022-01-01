@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-ma-none q-pa-none my-page-height">
+  <q-page class="my-page-height">
     <q-card class="q-ma-none q-mx-xs q-mt-xs q-mb-none q-pa-none">
       <div class="row">
         <div class="col">
@@ -28,9 +28,11 @@ export default defineComponent({
     const app = getCurrentInstance().appContext.config.globalProperties;
     const store = useStore();
 
+    // Obtener propiedades del store
     const contractList = markRaw(
       computed(() => store.getters["contracts/contractList"])
     );
+    const token = markRaw(computed(() => store.getters["auth/token"]));
 
     /**
      * Obtiene un listado de todos los contratos que se han creado hasta la fecha
@@ -50,7 +52,11 @@ export default defineComponent({
         // Obtener contratos
         const {
           data: { contracts },
-        } = await app.$api.get("contracts");
+        } = await app.$api.get("contracts", {
+          headers: {
+            Authorization: `Bearer ${token.value}`,
+          },
+        });
 
         // Guardar información en el store
         store.commit("contracts/setContractList", contracts);
@@ -60,7 +66,11 @@ export default defineComponent({
       } catch (error) {
         app.$q.loading.hide();
         console.trace(error);
-        app.$Swal.fire("Error", error.message, "error");
+        app.$Swal.fire(
+          "Error",
+          "Hubo un error al intentsar obtener el listado de contratos",
+          "error"
+        );
       }
     }
 

@@ -3,14 +3,14 @@
  * @param {*} state
  */
 export const setDefaultState = (state) => {
-    state.employeeList = []
+    state.userList = []
 }
 
 /**
- * Setea la información del token en el state de users.
+ * Setea la información de los usuarios en el state de users.
  * @param {*} state
- * @param {*} employeeList
+ * @param {*} userList
  */
-export const setEmployeeList = (state, employeeList) => {
-    state.employeeList = employeeList
+export const setUserList = (state, userList) => {
+    state.userList = userList
 }

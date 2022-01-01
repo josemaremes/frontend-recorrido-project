@@ -1,4 +1,8 @@
-
-export function employeeList(state) {
-  return state.employeeList
+/**
+ * Devuelve la informaci{on de los usuarios
+ * @param {*} state
+ * @returns
+ */
+export function userList(state) {
+  return state.userList
 }

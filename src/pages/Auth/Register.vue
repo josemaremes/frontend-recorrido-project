@@ -122,7 +122,9 @@
                 "
                 :option-label="
                   (opt) =>
-                    Object(opt) === opt && 'name' in opt ? opt.name : '- Null -'
+                    Object(opt) === opt && 'role_name' in opt
+                      ? opt.role_name
+                      : '- Null -'
                 "
                 emit-value
                 map-options
@@ -189,6 +191,7 @@ export default defineComponent({
      */
     async function signUp() {
       try {
+        // Show componente de carga
         app.$q.loading.show({
           spinner: app.$QSpinnerGears,
           spinnerColor: "white",
@@ -198,13 +201,20 @@ export default defineComponent({
           message: "Registrando usuario...",
         });
 
+        // Registrar usuario
         await app.$api.post("register", credentials.value);
 
+        // Ocultar componente de carga
+        app.$q.loading.hide();
+
+        // Mostrar mensaje de éxito
         app.$Swal.fire(
           "Success",
           "El usuario ha sido creado con éxito. Puedes hacer login de inmediato",
           "success"
         );
+
+        // Redireccionar
         app.$router.push("/auth/login");
       } catch (error) {
         app.$q.loading.hide();
