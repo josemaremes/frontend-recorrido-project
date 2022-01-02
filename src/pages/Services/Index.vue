@@ -3,7 +3,7 @@
     <q-card class="q-ma-none q-mx-md q-mt-xs q-mb-none q-pa-none">
       <div class="row">
         <div class="col-12">
-          <q-card-section class="text-h6"> Services </q-card-section>
+          <q-card-section class="text-h6"> Servicios </q-card-section>
         </div>
         <div class="col-12">
           <q-table
@@ -38,6 +38,7 @@
                 label="Crear"
                 icon="add"
                 size="sm"
+                @click="store.commit('services/setShowDialog', true)"
               />
               <q-btn
                 class="q-mx-md q-my-sm"
@@ -46,6 +47,7 @@
                 label="Refrescar"
                 icon="refresh"
                 size="sm"
+                @click="refreshTable"
               />
             </template>
             <template v-slot:body-cell-actions="props">
@@ -57,6 +59,12 @@
                   flat
                   icon="delete"
                   round
+                  @click="
+                    store.commit('services/setDeleteDialog', {
+                      serviceId: props.row.id,
+                      deleteDialog: true,
+                    })
+                  "
                 >
                   <q-tooltip
                     anchor="top middle"
@@ -69,13 +77,15 @@
             </template>
             <template v-slot:no-data="{}">
               <div class="full-width row flex-center q-gutter-sm">
-                <span>No hay información disponible</span>
+                <span>No hay información de servicios registrados</span>
               </div>
             </template>
           </q-table>
         </div>
       </div>
     </q-card>
+    <create-dialog></create-dialog>
+    <delete-dialog></delete-dialog>
   </q-page>
 </template>
 
@@ -89,15 +99,20 @@ import {
   ref,
 } from "vue";
 import { useStore } from "vuex";
+import CreateDialog from "./CreateDialog.vue";
+import DeleteDialog from "./DeleteDialog.vue";
 
 export default defineComponent({
   name: "Services",
+  components: {
+    CreateDialog,
+    DeleteDialog,
+  },
   setup() {
     const app = getCurrentInstance().appContext.config.globalProperties;
     const store = useStore();
     const loading = ref(false);
     const filter = ref("");
-    const showDialog = ref(false);
     const tableColumns = ref([
       {
         name: "id",
@@ -169,13 +184,26 @@ export default defineComponent({
       }
     }
 
+    /**
+     * Hace una consulta a la base de datos para refrescar los datos en la tabla
+     */
+    async function refreshTable() {
+      // Inicializar información en el store
+      store.commit("services/setDefaultState");
+
+      // Hacer nueva búsqueda
+      await getServices();
+    }
+
     onMounted(getServices);
 
     return {
       filter,
       loading,
       serviceList,
+      store,
       tableColumns,
+      refreshTable,
     };
   },
 });

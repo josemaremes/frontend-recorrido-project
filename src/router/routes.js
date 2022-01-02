@@ -20,11 +20,6 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       {
-        path: '/available-hours', component: () => import('pages/AvailableHours'), meta: {
-          requiresAuth: true,
-        }
-      },
-      {
         path: '/contracts', component: () => import('pages/Contracts'), meta: {
           requiresAuth: true,
         }

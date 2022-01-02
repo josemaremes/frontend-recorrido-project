@@ -4,6 +4,9 @@
  */
 export default function () {
   return {
-    serviceList: []
+    deleteDialog: false,
+    serviceId: null,
+    serviceList: [],
+    showDialog: false
   }
 }

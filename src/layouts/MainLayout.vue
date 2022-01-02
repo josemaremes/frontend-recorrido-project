@@ -78,11 +78,6 @@ export default defineComponent({
         link: "/contracts",
       },
       {
-        title: "Disponibilidad de Horas",
-        icon: "calendar_view_week",
-        link: "/available-hours",
-      },
-      {
         title: "Servicios",
         icon: "miscellaneous_services",
         link: "/services",

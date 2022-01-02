@@ -4,6 +4,9 @@
  */
 export default function () {
   return {
-    contractList: []
+    contractId: null,
+    contractList: [],
+    deleteDialog: false,
+    showDialog: false,
   }
 }

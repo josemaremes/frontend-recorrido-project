@@ -4,6 +4,8 @@
  */
 export default function () {
   return {
+    deleteDialog: false,
+    userId: null,
     userList: []
   }
 }
