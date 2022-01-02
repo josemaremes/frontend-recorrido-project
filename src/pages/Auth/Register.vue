@@ -155,9 +155,9 @@ export default defineComponent({
   setup() {
     const app = getCurrentInstance().appContext.config.globalProperties;
     const credentials = ref({
+      email: "",
       name: "",
       lastname: "",
-      email: "",
       password: "",
       role_id: null,
     });

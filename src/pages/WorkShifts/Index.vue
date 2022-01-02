@@ -1,9 +1,9 @@
 <template>
-  <q-page class="q-ma-none q-pa-none my-page-height">
-    <q-card class="q-ma-none q-mx-xs q-mt-xs q-mb-none q-pa-none">
+  <q-page class="my-page-height">
+    <q-card class="q-ma-none q-mx-md q-mt-xs q-mb-none q-pa-none">
       <div class="row">
         <div class="col">
-          <q-card-section class="text-h6"> Work Shifts </q-card-section>
+          <q-card-section class="text-h6"> Turnos Confirmados </q-card-section>
         </div>
       </div>
     </q-card>
