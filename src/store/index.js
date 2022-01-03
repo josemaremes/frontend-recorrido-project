@@ -5,6 +5,7 @@ import auth from './auth'
 import contracts from './contracts'
 import services from './services'
 import users from './users'
+import workshifts from './work-shifts'
 
 /*
  * If not building with SSR mode, you can
@@ -21,7 +22,8 @@ export default store(function (/* { ssrContext } */) {
       auth,
       contracts,
       services,
-      users
+      users,
+      workshifts
     },
 
     // enable strict mode (adds overhead!)

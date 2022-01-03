@@ -143,7 +143,7 @@ export default defineComponent({
      */
     async function getUsers() {
       try {
-        // Show componente de carga
+        // Mostrar componente de carga
         loading.value = true;
         app.$q.loading.show({
           spinner: app.$QSpinnerGears,

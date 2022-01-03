@@ -76,7 +76,7 @@
                 label="Día de Apertura"
                 lazy-rules
                 :rules="[
-                  (val) => val || 'Debes seleccionar el tipo de servicio',
+                  (val) => val || 'Debes seleccionar una fecha de apertura',
                 ]"
               ></q-select>
             </div>
@@ -209,7 +209,7 @@ export default defineComponent({
           (day) => day.id === newValue
         );
         excludeCloseDays.value = daysList.value
-          .filter((_, index) => index < indexFound)
+          .filter((_, index) => index <= indexFound)
           .map((item) => item.day_name);
       },
       { deep: true }
@@ -314,7 +314,7 @@ export default defineComponent({
      */
     async function getInitialList() {
       try {
-        // Obtener días y horas
+        // Obtener servicios, días y horas
         let [services, days, schedules] = await Promise.all([
           (
             await app.$api.get("services", {

@@ -19,17 +19,12 @@
         />
       </q-card-section>
       <q-separator></q-separator>
-      <q-card-section v-if="serviceList.length > 3" class="text-justify">
+      <q-card-section class="text-justify">
         Esta acción eliminará el servicio número {{ serviceId }} de la base de
         datos. Por favor tenga en cuenta que una vez eliminada esta información
-        ya no podrá ser recuperada.
+        ya no podrá ser recuperada. Se recomienda no eliminar servicios que
+        estén asociados a un contrato.
       </q-card-section>
-      <q-card-section v-else class="text-justify">
-        El número mínimo de usuarios que se deben mantener en la Base de Datos
-        corresponde a 3. En caso de que quieras eliminar un usuario debes
-        crearlo desde la vista de registro.
-      </q-card-section>
-
       <q-card-actions class="q-pa-md">
         <q-btn
           color="blue-10 full-width"
