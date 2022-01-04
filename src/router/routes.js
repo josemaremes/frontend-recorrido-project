@@ -16,7 +16,7 @@ const routes = [
     ],
   },
   {
-    path: '',
+    path: '', redirect: "/work-shifts",
     component: () => import('layouts/MainLayout.vue'),
     children: [
       {
