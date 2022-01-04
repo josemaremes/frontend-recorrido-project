@@ -15,20 +15,15 @@ export default boot(({ app, router, store }) => {
   app.config.globalProperties.$Swal = Swal
   app.config.globalProperties.$QSpinnerGears = QSpinnerGears
 
-  // // Proteger rutas
-  // router.beforeResolve((to, _, next) => {
-  //   // if (to.matched.some((record) => record.meta.requiresAuth)) {
-  //   //   if (!store.state.auth.isAuthenticated || !store.state.auth.token) {
-  //   //     Swal.fire(
-  //   //       'Error',
-  //   //       'No tienes permisos para ver esta página. Por favor inicia sesión',
-  //   //       'error'
-  //   //     )
-  //   //     router.push({ path: '/auth/login' })
-  //   //   }
-  //   // }
-  //   next()
-  // })
+  // Proteger rutas
+  router.beforeResolve((to, _, next) => {
+    if (to.matched.some((record) => record.meta.requiresAuth)) {
+      if (!store.state.auth.isAuthenticated || !store.state.auth.token) {
+        router.push({ path: '/auth/login' })
+      }
+    }
+    next()
+  })
 })
 
 export { axios, api }
