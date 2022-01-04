@@ -54,13 +54,13 @@
                   {{ item.dateTitle }}
                 </q-card-section>
                 <q-card-section class="first-color">
-                  {{ item.userOneLabel }}
+                  {{ item.firstUserName }}
                 </q-card-section>
                 <q-card-section class="second-color">
-                  {{ item.userTwoLabel }}
+                  {{ item.secondUserName }}
                 </q-card-section>
                 <q-card-section class="third-color">
-                  {{ item.userThreeLabel }}
+                  {{ item.thirdUserName }}
                 </q-card-section>
               </q-card-section>
             </q-item>
@@ -74,22 +74,22 @@
               <q-card-section horizontal style="border: 1px solid black">
                 <q-card-section
                   :class="
-                    !element.user_one_value &&
-                    !element.user_two_value &&
-                    !element.user_three_value
+                    !element.firstUserValue &&
+                    !element.secondUserValue &&
+                    !element.thirdUserValue
                       ? 'negative-color'
                       : 'positive-color'
                   "
                   >{{ element.interval }}</q-card-section
                 >
                 <q-card-section>
-                  <q-checkbox v-model="element.user_one_value"></q-checkbox>
+                  <q-checkbox v-model="element.firstUserValue"></q-checkbox>
                 </q-card-section>
                 <q-card-section>
-                  <q-checkbox v-model="element.user_two_value"></q-checkbox>
+                  <q-checkbox v-model="element.secondUserValue"></q-checkbox>
                 </q-card-section>
                 <q-card-section>
-                  <q-checkbox v-model="element.user_three_value"></q-checkbox>
+                  <q-checkbox v-model="element.thirdUserValue"></q-checkbox>
                 </q-card-section>
               </q-card-section>
             </q-item>
@@ -124,7 +124,6 @@ export default defineComponent({
   setup() {
     const app = getCurrentInstance().appContext.config.globalProperties;
     const store = useStore();
-
     const shifts = ref([]);
 
     // Obtener propiedades del store
@@ -141,41 +140,91 @@ export default defineComponent({
       generalState.value.workshiftList.forEach((item) => {
         let shiftObject = {
           dateTitle: item.dateTitle,
-          userOneLabel: "",
-          userTwoLabel: "",
-          userThreeLabel: "",
+          firstUserName: "",
+          secondUserName: "",
+          thirdUserName: "",
           rows: [],
         };
         item.rows.forEach((row) => {
           const newRow = {
             contract: row.contract,
-            date_title: row.dateTitle,
+            service: row.service,
+            dateTitle: row.dateTitle,
             interval: row.hourInterval,
-            not_label: "Sin Asignar",
-            not_value: true,
-            user_one_label: row.firstPersonLabel,
-            user_one_value: row.firstPersonValue,
-            user_two_label: row.secondPersonLabel,
-            user_two_value: row.secondPersonValue,
-            user_three_label: row.thirdPersonLabel,
-            user_three_value: row.thirdPersonValue,
+            notName: "Sin Asignar",
+            notValue: false,
+            firstUserName: row.firstPersonLabel,
+            firstUserValue: row.firstPersonValue,
+            secondUserName: row.secondPersonLabel,
+            secondUserValue: row.secondPersonValue,
+            thirdUserName: row.thirdPersonLabel,
+            thirdUserValue: row.thirdPersonValue,
             week: row.week,
           };
-          shiftObject["userOneLabel"] = newRow.user_one_label;
-          shiftObject["userTwoLabel"] = newRow.user_two_label;
-          shiftObject["userThreeLabel"] = newRow.user_three_label;
+          shiftObject["firstUserName"] = newRow.firstUserName;
+          shiftObject["secondUserName"] = newRow.secondUserName;
+          shiftObject["thirdUserName"] = newRow.thirdUserName;
           shiftObject["rows"].push(newRow);
         });
         shiftBackup.push(shiftObject);
       });
       shifts.value = shiftBackup;
-      console.log(shifts.value);
     }
 
     /**
      * Actualiza la información de los turnos en la Base de Datos
      */
-    async function updateWorkshift() {}
+    async function updateWorkshift() {
+      try {
+        // Show componente de carga
+        app.$q.loading.show({
+          spinner: app.$QSpinnerGears,
+          spinnerColor: "white",
+          spinnerSize: 100,
+          messageColor: "white",
+          backgroundColor: "black",
+          message: "Actualizando la información...",
+        });
+
+        // Construir payload
+        let payload = [];
+        shifts.value.forEach((item) => {
+          payload = payload.concat(item.rows);
+        });
+
+        // Obtener contratos
+        await app.$api.post(
+          "shifts",
+          { data: JSON.stringify(payload) },
+          {
+            headers: {
+              Authorization: `Bearer ${token.value}`,
+            },
+          }
+        );
+
+        // Cerrar store
+        store.commit("workshifts/setDefaultState");
+
+        // Ocultar componente de carga
+        app.$q.loading.hide();
+
+        // Mostrar mensaje de éxito
+        app.$Swal.fire(
+          "Success",
+          "Los turnos fueron actualizados correctamente",
+          "success"
+        );
+      } catch (error) {
+        app.$q.loading.hide();
+        console.trace(error);
+        app.$Swal.fire(
+          "Error",
+          "Hubo un error al intentar actualizar la información de los turnis",
+          "error"
+        );
+      }
+    }
 
     onMounted(getInitialView);
 

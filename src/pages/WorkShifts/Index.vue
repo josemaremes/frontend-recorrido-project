@@ -96,6 +96,7 @@
         <div class="col-3">
           <q-card-section class="flex justify-end">
             <q-btn
+              :disable="weekSelected === 'Semana'"
               color="blue-10"
               label="Filtrar"
               icon="filter_alt"
@@ -112,7 +113,16 @@
             {{ momentWeeks[weekSelected].format }}
           </q-card-section>
           <q-card-section class="text-center">
-            {{ momentWeeks[weekSelected].format }}
+            <div class="row">
+              <div
+                v-for="item in Object.keys(totalHours)"
+                :key="item"
+                class="col-3"
+                style=""
+              >
+                {{ item }} tiene {{ totalHours[item] }} horas
+              </div>
+            </div>
           </q-card-section>
         </div>
         <div class="col-12">
@@ -168,7 +178,7 @@
                   <span v-else>{{
                     element.firstPersonValue
                       ? element.firstPersonLabel
-                      : element.firstPersonValue
+                      : element.secondPersonValue
                       ? element.secondPersonLabel
                       : element.thirdPersonLabel
                   }}</span>
@@ -196,6 +206,7 @@ import {
 import { useStore } from "vuex";
 import EditDialog from "./EditDialog.vue";
 import moment from "moment";
+import { date } from "quasar";
 moment.locale("es");
 moment.updateLocale("es", {
   weekdays: [
@@ -225,6 +236,7 @@ export default defineComponent({
       label: "Servicio",
       value: null,
     });
+    const totalHours = ref({});
     const weekSelected = ref("Semana");
 
     // Obtener propiedades del store
@@ -232,6 +244,27 @@ export default defineComponent({
       computed(() => store.getters["workshifts/editDialog"])
     );
     const token = markRaw(computed(() => store.getters["auth/token"]));
+
+    // Validar el cambio del modal y reinicializar variables locales para hacer una nueva búsqueda
+    watch(
+      () => editDialog.value,
+      async (newValue) => {
+        if (!newValue) {
+          contractAndServices.value = {};
+          gridInformation.value = [];
+          totalHours.value = {};
+          momentWeeks.value = {};
+          weekSelected.value = "Semana";
+          serviceSelected.value = {
+            label: "Servicio",
+            value: null,
+          };
+          contractSelected.value = "Contrato";
+          await buildInitialView();
+        }
+      },
+      { deep: true }
+    );
 
     /**
      * Obtener información de la vista inicial
@@ -253,6 +286,7 @@ export default defineComponent({
           data: { contracts },
         } = await app.$api.get("contracts", {
           headers: {
+            contentType: "application/json; charset=utf-8",
             Authorization: `Bearer ${token.value}`,
           },
         });
@@ -337,6 +371,8 @@ export default defineComponent({
      */
     async function buildGrid() {
       try {
+        gridInformation.value = [];
+
         // Show componente de carga
         app.$q.loading.show({
           spinner: app.$QSpinnerGears,
@@ -347,17 +383,39 @@ export default defineComponent({
           message: "Armando grillas...",
         });
 
-        // Obtener usuarios
+        // Definir payload de búsqueda
+        const payload = {
+          contract_name: contractSelected.value,
+          service_name: serviceSelected.value.label,
+          week: weekSelected.value,
+        };
+        // Obtener turnos
         const {
-          data: { users },
-        } = await app.$api.get("users", {
-          headers: {
-            Authorization: `Bearer ${token.value}`,
-          },
-        });
+          data: { shifts },
+        } = await app.$api.get(
+          "shifts",
+          { data: JSON.stringify(payload) },
+          {
+            headers: {
+              Authorization: `Bearer ${token.value}`,
+            },
+          }
+        );
+        if (shifts.length === 0) {
+          // Obtener usuarios
+          const {
+            data: { users },
+          } = await app.$api.get("users", {
+            headers: {
+              Authorization: `Bearer ${token.value}`,
+            },
+          });
 
-        // Crear grilla Vacía
-        buildEmptyGrid(users.map((item) => item.name).slice(0, 4));
+          // Crear grilla Vacía
+          buildEmptyGrid(users.map((item) => item.name).slice(0, 3));
+        } else {
+          buildFullGrid(shifts);
+        }
 
         // Ocultar componente de carga
         app.$q.loading.hide();
@@ -373,6 +431,69 @@ export default defineComponent({
     }
 
     /**
+     * Construye una grilla con información
+     */
+    function buildFullGrid(shifts) {
+      let dateTitle = null;
+      let rows = [];
+      shifts.forEach((shift) => {
+        let newShift = {
+          contract: shift.contract_name,
+          service: shift.service_name,
+          dateTitle: shift.date_title,
+          firstPersonLabel: shift.first_user_name,
+          firstPersonValue: shift.first_user_value,
+          notAssignedLabel: shift.not_name,
+          notAssignedValue: shift.not_value,
+          secondPersonLabel: shift.second_user_name,
+          secondPersonValue: shift.second_user_value,
+          thirdPersonLabel: shift.third_user_name,
+          thirdPersonValue: shift.third_user_value,
+          week: shift.week,
+          hourInterval: shift.interval,
+        };
+
+        console.log(newShift);
+
+        if (!dateTitle) {
+          dateTitle = shift.date_title;
+          rows.push(newShift);
+          totalHours.value[newShift.firstPersonLabel] =
+            newShift.firstPersonValue ? 1 : 0;
+          totalHours.value[newShift.secondPersonLabel] =
+            newShift.secondPersonValue ? 1 : 0;
+          totalHours.value[newShift.thirdPersonLabel] =
+            newShift.thirdPersonValue ? 1 : 0;
+          totalHours.value[newShift.notAssignedLabel] =
+            newShift.notAssignedValue ? 1 : 0;
+        } else {
+          if (dateTitle === shift.date_title) {
+            rows.push(newShift);
+          } else {
+            gridInformation.value.push({
+              dateTitle,
+              rows,
+            });
+            dateTitle = shift.date_title;
+            rows = [newShift];
+          }
+          totalHours.value[newShift.firstPersonLabel] +=
+            newShift.firstPersonValue ? 1 : 0;
+          totalHours.value[newShift.secondPersonLabel] +=
+            newShift.secondPersonValue ? 1 : 0;
+          totalHours.value[newShift.thirdPersonLabel] +=
+            newShift.thirdPersonValue ? 1 : 0;
+          totalHours.value[newShift.notAssignedLabel] +=
+            newShift.notAssignedValue ? 1 : 0;
+        }
+      });
+      gridInformation.value.push({
+        dateTitle,
+        rows,
+      });
+    }
+
+    /**
      * Construye una grilla vacía.
      */
     function buildEmptyGrid(userNames) {
@@ -380,6 +501,11 @@ export default defineComponent({
       const contractSchedules =
         contractAndServices.value[contractSelected.value].schedules;
       const startEndDate = momentWeeks.value[weekSelected.value];
+
+      // Agregar esquema de horas por usuario
+      userNames
+        .concat(["Sin Asignar"])
+        .forEach((name) => (totalHours.value[name] = 0));
 
       // Armar grilla por defecto
       contractSchedules.forEach((schedule) => {
@@ -408,6 +534,7 @@ export default defineComponent({
 
             let shift = {
               contract: contractSelected.value,
+              service: serviceSelected.value.label,
               dateTitle,
               firstPersonLabel: userNames[0],
               firstPersonValue: false,
@@ -432,6 +559,7 @@ export default defineComponent({
                 ...shift,
                 hourInterval: "23:00-00:00",
               });
+              totalHours.value[shift.notAssignedLabel] += 1;
             } else {
               do {
                 const firstHour =
@@ -446,6 +574,7 @@ export default defineComponent({
                   ...shift,
                   hourInterval: firstHour + secondHour,
                 });
+                totalHours.value[shift.notAssignedLabel] += 1;
                 openHour += 1;
               } while (openHour < closeHour);
             }
@@ -483,6 +612,7 @@ export default defineComponent({
       gridInformation,
       momentWeeks,
       serviceSelected,
+      totalHours,
       weekSelected,
       buildGrid,
       setDialogValues,
@@ -498,9 +628,11 @@ export default defineComponent({
 }
 .box-color {
   background-color: $grey-3;
+  color: black;
 }
 .first-color {
   background-color: $accent;
+  color: black;
 }
 .negative-color {
   background-color: $red-5;
@@ -508,11 +640,14 @@ export default defineComponent({
 }
 .positive-color {
   background-color: $green-12;
+  color: black;
 }
 .second-color {
   background-color: $primary;
+  color: black;
 }
 .third-color {
   background-color: $warning;
+  color: black;
 }
 </style>
