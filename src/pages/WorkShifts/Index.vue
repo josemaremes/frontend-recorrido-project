@@ -392,15 +392,11 @@ export default defineComponent({
         // Obtener turnos
         const {
           data: { shifts },
-        } = await app.$api.get(
-          "shifts",
-          { data: JSON.stringify(payload) },
-          {
-            headers: {
-              Authorization: `Bearer ${token.value}`,
-            },
-          }
-        );
+        } = await app.$api.post("shifts/filtered", payload, {
+          headers: {
+            Authorization: `Bearer ${token.value}`,
+          },
+        });
         if (shifts.length === 0) {
           // Obtener usuarios
           const {
@@ -452,8 +448,6 @@ export default defineComponent({
           week: shift.week,
           hourInterval: shift.interval,
         };
-
-        console.log(newShift);
 
         if (!dateTitle) {
           dateTitle = shift.date_title;
