@@ -128,7 +128,7 @@ export default defineComponent({
         store.commit("auth/setToken", token);
         store.commit("auth/setUser", user);
 
-        // Redirecccionar
+        // Redireccionar
         app.$router.push("/work-shifts");
 
         // Ocultar componente de carga

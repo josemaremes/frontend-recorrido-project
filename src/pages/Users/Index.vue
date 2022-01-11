@@ -33,6 +33,14 @@
               </div>
               <q-space></q-space>
               <q-btn
+                color="blue-10"
+                :disable="loading"
+                label="Crear"
+                icon="add"
+                size="sm"
+                @click="store.commit('users/setShowDialog', true)"
+              />
+              <q-btn
                 class="q-mx-md q-my-sm"
                 color="blue-10"
                 :disable="loading"
@@ -76,6 +84,7 @@
         </div>
       </div>
     </q-card>
+    <create-dialog></create-dialog>
     <delete-dialog></delete-dialog>
   </q-page>
 </template>
@@ -90,11 +99,13 @@ import {
   ref,
 } from "vue";
 import { useStore } from "vuex";
+import CreateDialog from "./CreateDialog.vue";
 import DeleteDialog from "./DeleteDialog.vue";
 
 export default defineComponent({
   name: "Users",
   components: {
+    CreateDialog,
     DeleteDialog,
   },
   setup() {

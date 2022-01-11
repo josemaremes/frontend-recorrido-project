@@ -5,6 +5,7 @@
 export default function () {
   return {
     deleteDialog: false,
+    showDialog: false,
     userId: null,
     userList: []
   }

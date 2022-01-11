@@ -18,6 +18,24 @@ export const setUserList = (state, userList) => {
 }
 
 /**
+ * Agrega un item al campo userList.
+ * @param {*} state
+ * @param {*} userItem
+ */
+export const setUserItem = (state, userItem) => {
+  state.userList.push(userItem)
+}
+
+/**
+ * Setea el estado del campo showDialog.
+ * @param {*} state
+ * @param {*} showDialog
+ */
+export const setShowDialog = (state, showDialog) => {
+  state.showDialog = showDialog
+}
+
+/**
  * Setea el estado de los campos userId y deleteDialog.
  * @param {*} state
  * @param {*} payload

@@ -8,6 +8,15 @@ export function deleteDialog(state) {
 }
 
 /**
+ * Retorna el estado del campo showDialog.
+ * @param {*} state
+ * @returns
+ */
+export function showDialog(state) {
+  return state.showDialog
+}
+
+/**
  * Retorna el estado del campo userId.
  * @param {*} state
  * @returns

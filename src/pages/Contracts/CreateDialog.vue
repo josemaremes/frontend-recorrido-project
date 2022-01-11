@@ -121,7 +121,7 @@
                 :option-label="
                   (opt) =>
                     Object(opt) === opt && 'time_name' in opt
-                      ? opt.time_name
+                      ? setFormat(opt.time_name)
                       : '- Null -'
                 "
                 emit-value
@@ -149,7 +149,7 @@
                 :option-label="
                   (opt) =>
                     Object(opt) === opt && 'time_name' in opt
-                      ? opt.time_name
+                      ? setFormat(opt.time_name)
                       : '- Null -'
                 "
                 emit-value
@@ -209,7 +209,7 @@ export default defineComponent({
           (day) => day.id === newValue
         );
         excludeCloseDays.value = daysList.value
-          .filter((_, index) => index <= indexFound)
+          .slice(0, indexFound + 1)
           .map((item) => item.day_name);
       },
       { deep: true }
@@ -222,7 +222,7 @@ export default defineComponent({
           (day) => day.id === newValue
         );
         excludeCloseHours.value = schedulesList.value
-          .filter((_, index) => index <= indexFound)
+          .slice(indexFound === 23 ? 1 : 0, indexFound + 1)
           .map((schedule) => schedule.time_name);
       },
       { deep: true }
@@ -257,13 +257,17 @@ export default defineComponent({
             )
           )
           .map((item) => item.day_name);
-        const [openHourName, closeHourName] = schedulesList.value
+        let [openHourName, closeHourName] = schedulesList.value
           .filter((schedule) =>
             [contract.value.openHourId, contract.value.closeHourId].includes(
               schedule.id
             )
           )
           .map((item) => item.time_name);
+        if (contract.value.openHourId > contract.value.closeHourId) {
+          openHourName = 23;
+          closeHourName = 0;
+        }
         const payload = {
           contract_name: contract.value.contractName,
           service_id: contract.value.serviceId,
@@ -354,6 +358,15 @@ export default defineComponent({
       }
     }
 
+    /**
+     * Otorga un formato a las horas de apertura y cierre
+     */
+    function setFormat(hour) {
+      return hour < 10
+        ? "0" + hour.toString() + ":00"
+        : hour.toString() + ":00";
+    }
+
     onMounted(getInitialList);
 
     return {
@@ -366,6 +379,7 @@ export default defineComponent({
       store,
       showDialog,
       createContract,
+      setFormat,
     };
   },
 });
