@@ -201,7 +201,6 @@ export default defineComponent({
         });
         shiftBackup.push(shiftObject);
       });
-      console.log(shiftBackup);
       shifts.value = shiftBackup;
     }
 
@@ -223,10 +222,12 @@ export default defineComponent({
         // Construir payload
         let payload = [];
         shifts.value.forEach((item) => {
-          payload = payload.concat(item.rows);
+          Object.keys(item.interval).forEach((time) => {
+            payload = payload.concat(item.interval[time]);
+          });
         });
 
-        // Obtener contratos
+        // Enviar selección de turnos
         await app.$api.post(
           "shifts",
           { data: JSON.stringify(payload) },
