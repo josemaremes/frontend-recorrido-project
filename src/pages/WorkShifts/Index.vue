@@ -145,43 +145,33 @@
             <q-item
               v-for="(element, index) in item.rows"
               :key="index"
-              class="justify-center"
+              class="justify-center q-pa-xs"
               active
               active-class="box-color"
             >
               <q-card-section horizontal style="border: 1px solid black">
                 <q-card-section
-                  :class="
-                    element.notAssignedValue
+                  :class="[
+                    element.userName === 'Sin Asignar'
                       ? 'negative-color'
-                      : 'positive-color'
-                  "
-                  >{{ element.hourInterval }}</q-card-section
+                      : 'positive-color',
+                    'q-pa-sm',
+                  ]"
+                  >{{ element.interval }}</q-card-section
                 >
                 <q-card-section
-                  :class="
-                    element.firstPersonValue
-                      ? 'first-color'
-                      : element.secondPersonValue
-                      ? 'second-color'
-                      : element.thirdPersonValue
-                      ? 'third-color'
-                      : ''
-                  "
+                  :class="[
+                    element.userName === 'Sin Asignar' ? '' : 'black',
+                    'q-pa-sm',
+                  ]"
                 >
                   <q-icon
-                    v-if="element.notAssignedValue"
+                    v-if="element.userName === 'Sin Asignar'"
                     name="warning"
                     color="yellow"
                     size="20px"
                   ></q-icon>
-                  <span v-else>{{
-                    element.firstPersonValue
-                      ? element.firstPersonLabel
-                      : element.secondPersonValue
-                      ? element.secondPersonLabel
-                      : element.thirdPersonLabel
-                  }}</span>
+                  <span v-else>{{ element.userName }}</span>
                 </q-card-section>
               </q-card-section>
             </q-item>
@@ -389,29 +379,31 @@ export default defineComponent({
           service_name: serviceSelected.value.label,
           week: weekSelected.value,
         };
-        // Obtener turnos
-        const {
-          data: { shifts },
-        } = await app.$api.post("shifts/filtered", payload, {
-          headers: {
-            Authorization: `Bearer ${token.value}`,
-          },
-        });
-        if (shifts.length === 0) {
-          // Obtener usuarios
-          const {
-            data: { users },
-          } = await app.$api.get("users", {
-            headers: {
-              Authorization: `Bearer ${token.value}`,
-            },
-          });
+        // Obtener usuarios y turnos
+        let [users, shifts] = await Promise.all([
+          (
+            await app.$api.get("users", {
+              headers: {
+                Authorization: `Bearer ${token.value}`,
+              },
+            })
+          ).data.users,
+          (
+            await app.$api.post("shifts/filtered", payload, {
+              headers: {
+                Authorization: `Bearer ${token.value}`,
+              },
+            })
+          ).data.shifts,
+        ]);
 
-          // Crear grilla Vacía
-          buildEmptyGrid(users.map((item) => item.name).slice(0, 3));
-        } else {
-          buildFullGrid(shifts);
-        }
+        // Guardar información en el store
+        store.commit("users/setUserList", users);
+
+        // Armar grilla
+        shifts.length === 0
+          ? buildEmptyGrid(users.map((item) => item.name).sort())
+          : buildFullGrid(shifts);
 
         // Ocultar componente de carga
         app.$q.loading.hide();
@@ -430,61 +422,62 @@ export default defineComponent({
      * Construye una grilla con información
      */
     function buildFullGrid(shifts) {
-      let dateTitle = null;
-      let rows = [];
-      shifts.forEach((shift) => {
-        let newShift = {
-          contract: shift.contract_name,
-          service: shift.service_name,
-          dateTitle: shift.date_title,
-          firstPersonLabel: shift.first_user_name,
-          firstPersonValue: shift.first_user_value,
-          notAssignedLabel: shift.not_name,
-          notAssignedValue: shift.not_value,
-          secondPersonLabel: shift.second_user_name,
-          secondPersonValue: shift.second_user_value,
-          thirdPersonLabel: shift.third_user_name,
-          thirdPersonValue: shift.third_user_value,
-          week: shift.week,
-          hourInterval: shift.interval,
-        };
+      console.log("Turnos asignados---->", shifts);
+      // let dateTitle = null;
+      // let rows = [];
+      // shifts.forEach((shift) => {
+      //   let newShift = {
+      //     contract: shift.contract_name,
+      //     service: shift.service_name,
+      //     dateTitle: shift.date_title,
+      //     firstPersonLabel: shift.first_user_name,
+      //     firstPersonValue: shift.first_user_value,
+      //     notAssignedLabel: shift.not_name,
+      //     notAssignedValue: shift.not_value,
+      //     secondPersonLabel: shift.second_user_name,
+      //     secondPersonValue: shift.second_user_value,
+      //     thirdPersonLabel: shift.third_user_name,
+      //     thirdPersonValue: shift.third_user_value,
+      //     week: shift.week,
+      //     hourInterval: shift.interval,
+      //   };
 
-        if (!dateTitle) {
-          dateTitle = shift.date_title;
-          rows.push(newShift);
-          totalHours.value[newShift.firstPersonLabel] =
-            newShift.firstPersonValue ? 1 : 0;
-          totalHours.value[newShift.secondPersonLabel] =
-            newShift.secondPersonValue ? 1 : 0;
-          totalHours.value[newShift.thirdPersonLabel] =
-            newShift.thirdPersonValue ? 1 : 0;
-          totalHours.value[newShift.notAssignedLabel] =
-            newShift.notAssignedValue ? 1 : 0;
-        } else {
-          if (dateTitle === shift.date_title) {
-            rows.push(newShift);
-          } else {
-            gridInformation.value.push({
-              dateTitle,
-              rows,
-            });
-            dateTitle = shift.date_title;
-            rows = [newShift];
-          }
-          totalHours.value[newShift.firstPersonLabel] +=
-            newShift.firstPersonValue ? 1 : 0;
-          totalHours.value[newShift.secondPersonLabel] +=
-            newShift.secondPersonValue ? 1 : 0;
-          totalHours.value[newShift.thirdPersonLabel] +=
-            newShift.thirdPersonValue ? 1 : 0;
-          totalHours.value[newShift.notAssignedLabel] +=
-            newShift.notAssignedValue ? 1 : 0;
-        }
-      });
-      gridInformation.value.push({
-        dateTitle,
-        rows,
-      });
+      //   if (!dateTitle) {
+      //     dateTitle = shift.date_title;
+      //     rows.push(newShift);
+      //     totalHours.value[newShift.firstPersonLabel] =
+      //       newShift.firstPersonValue ? 1 : 0;
+      //     totalHours.value[newShift.secondPersonLabel] =
+      //       newShift.secondPersonValue ? 1 : 0;
+      //     totalHours.value[newShift.thirdPersonLabel] =
+      //       newShift.thirdPersonValue ? 1 : 0;
+      //     totalHours.value[newShift.notAssignedLabel] =
+      //       newShift.notAssignedValue ? 1 : 0;
+      //   } else {
+      //     if (dateTitle === shift.date_title) {
+      //       rows.push(newShift);
+      //     } else {
+      //       gridInformation.value.push({
+      //         dateTitle,
+      //         rows,
+      //       });
+      //       dateTitle = shift.date_title;
+      //       rows = [newShift];
+      //     }
+      //     totalHours.value[newShift.firstPersonLabel] +=
+      //       newShift.firstPersonValue ? 1 : 0;
+      //     totalHours.value[newShift.secondPersonLabel] +=
+      //       newShift.secondPersonValue ? 1 : 0;
+      //     totalHours.value[newShift.thirdPersonLabel] +=
+      //       newShift.thirdPersonValue ? 1 : 0;
+      //     totalHours.value[newShift.notAssignedLabel] +=
+      //       newShift.notAssignedValue ? 1 : 0;
+      //   }
+      // });
+      // gridInformation.value.push({
+      //   dateTitle,
+      //   rows,
+      // });
     }
 
     /**
@@ -527,17 +520,11 @@ export default defineComponent({
             )}`;
 
             let shift = {
-              contract: contractSelected.value,
-              service: serviceSelected.value.label,
+              contractName: contractSelected.value,
+              serviceName: serviceSelected.value.label,
               dateTitle,
-              firstPersonLabel: userNames[0],
-              firstPersonValue: false,
-              notAssignedLabel: "Sin Asignar",
-              notAssignedValue: true,
-              secondPersonLabel: userNames[1],
-              secondPersonValue: false,
-              thirdPersonLabel: userNames[2],
-              thirdPersonValue: false,
+              userName: "Sin Asignar",
+              userValue: true,
               week: weekSelected.value,
             };
 
@@ -547,31 +534,25 @@ export default defineComponent({
               Number(schedule.openCloseSchedule[1]),
             ];
 
-            // Caso particular desde las 23:00 a las 00:00
-            if (openHour > closeHour) {
+            // Crear intervalos de tiempo
+            do {
+              const firstHour =
+                (openHour.toString().length === 2
+                  ? `${openHour.toString()}`
+                  : `0${openHour.toString()}`) + ":00";
+              const secondHour =
+                openHour + 1 === 24
+                  ? "-00:00"
+                  : `-${(openHour + 1).toString()}:00`;
               shifts.push({
                 ...shift,
-                hourInterval: "23:00-00:00",
+                interval: firstHour + secondHour,
               });
-              totalHours.value[shift.notAssignedLabel] += 1;
-            } else {
-              do {
-                const firstHour =
-                  (openHour.toString().length === 2
-                    ? `${openHour.toString()}`
-                    : `0${openHour.toString()}`) + ":00";
-                const secondHour =
-                  openHour + 1 === 24
-                    ? "-00:00"
-                    : `-${(openHour + 1).toString()}:00`;
-                shifts.push({
-                  ...shift,
-                  hourInterval: firstHour + secondHour,
-                });
-                totalHours.value[shift.notAssignedLabel] += 1;
-                openHour += 1;
-              } while (openHour < closeHour);
-            }
+              totalHours.value[shift.userName] += 1;
+              openHour += 1;
+            } while (openHour < closeHour);
+
+            // Crear información
             gridInformation.value.push({
               dateTitle,
               rows: shifts,

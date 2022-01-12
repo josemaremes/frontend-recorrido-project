@@ -48,48 +48,62 @@
           class="col-4 q-my-md q-mx-auto"
         >
           <q-list bordered separator>
-            <q-item class="justify-center text-bold">
-              <q-card-section horizontal style="border: 1px solid black">
-                <q-card-section class="active-color">
-                  {{ item.dateTitle }}
-                </q-card-section>
-                <q-card-section class="first-color">
-                  {{ item.firstUserName }}
-                </q-card-section>
-                <q-card-section class="second-color">
-                  {{ item.secondUserName }}
-                </q-card-section>
-                <q-card-section class="third-color">
-                  {{ item.thirdUserName }}
+            <q-item class="justify-center text-bold q-pa-xs">
+              <q-card-section
+                horizontal
+                class="justify-center"
+                style="border: 1px solid black; width: 100%"
+              >
+                <q-card-section
+                  v-for="(row, index) in item.headers"
+                  :key="index"
+                  :class="[
+                    index === 0 ? 'active-color' : '',
+                    'q-pa-sm',
+                    'text-center',
+                  ]"
+                  :style="[
+                    index === 0 ? 'width: 35%' : 'width: 20%',
+                    index !== 0
+                      ? `background-color: ${getRandomColor(index - 1)}`
+                      : 'background-color: none',
+                  ]"
+                >
+                  {{ row }}
                 </q-card-section>
               </q-card-section>
             </q-item>
             <q-item
-              v-for="(element, index) in item.rows"
-              :key="index"
-              class="justify-center flex wrap"
+              v-for="element in Object.keys(item.interval)"
+              :key="element"
+              class="justify-center q-pa-xs"
               active
               active-class="box-color"
             >
-              <q-card-section horizontal style="border: 1px solid black">
+              <q-card-section
+                horizontal
+                class="justify-center"
+                style="border: 1px solid black; width: 100%"
+              >
                 <q-card-section
-                  :class="
-                    !element.firstUserValue &&
-                    !element.secondUserValue &&
-                    !element.thirdUserValue
-                      ? 'negative-color'
-                      : 'positive-color'
-                  "
-                  >{{ element.interval }}</q-card-section
+                  :class="[
+                    item.interval[element].findIndex(
+                      (item) => item.userValue
+                    ) !== -1
+                      ? 'positive-color'
+                      : 'negative-color',
+                    'text-center',
+                  ]"
+                  style="width: 35%"
+                  >{{ element }}</q-card-section
                 >
-                <q-card-section>
-                  <q-checkbox v-model="element.firstUserValue"></q-checkbox>
-                </q-card-section>
-                <q-card-section>
-                  <q-checkbox v-model="element.secondUserValue"></q-checkbox>
-                </q-card-section>
-                <q-card-section>
-                  <q-checkbox v-model="element.thirdUserValue"></q-checkbox>
+                <q-card-section
+                  v-for="row in item.interval[element]"
+                  :key="row.interval"
+                  class="q-pa-sm"
+                  style="width: 20%"
+                >
+                  <q-checkbox v-model="row.userValue"></q-checkbox>
                 </q-card-section>
               </q-card-section>
             </q-item>
@@ -119,6 +133,24 @@ import {
 } from "vue";
 import { useStore } from "vuex";
 
+const COLORS = [
+  "#6188e2",
+  "#b2c326",
+  "#6b0392",
+  "#940002",
+  "#ee8a71",
+  "#f4c63d",
+  "#d17905",
+  "#453d3f",
+  "#59922b",
+  "#0544d3",
+  "#f05b4f",
+  "#dda458",
+  "#eacf7d",
+  "#86797d",
+  "#a748ca",
+];
+
 export default defineComponent({
   name: "EditDialog",
   setup() {
@@ -130,7 +162,15 @@ export default defineComponent({
     const generalState = markRaw(
       computed(() => store.getters["workshifts/wholeState"])
     );
+    const userList = markRaw(computed(() => store.getters["users/userList"]));
     const token = markRaw(computed(() => store.getters["auth/token"]));
+
+    /**
+     * Devuelve el valor hexadecimal de un color
+     */
+    function getRandomColor(index) {
+      return COLORS[index];
+    }
 
     /**
      * Obtiene una copia de la información de los turnos.
@@ -140,31 +180,24 @@ export default defineComponent({
       generalState.value.workshiftList.forEach((item) => {
         let shiftObject = {
           dateTitle: item.dateTitle,
-          firstUserName: "",
-          secondUserName: "",
-          thirdUserName: "",
-          rows: [],
+          headers: [item.dateTitle],
+          interval: {},
         };
         item.rows.forEach((row) => {
-          const newRow = {
-            contract: row.contract,
-            service: row.service,
-            dateTitle: row.dateTitle,
-            interval: row.hourInterval,
-            notName: "Sin Asignar",
-            notValue: false,
-            firstUserName: row.firstPersonLabel,
-            firstUserValue: row.firstPersonValue,
-            secondUserName: row.secondPersonLabel,
-            secondUserValue: row.secondPersonValue,
-            thirdUserName: row.thirdPersonLabel,
-            thirdUserValue: row.thirdPersonValue,
-            week: row.week,
-          };
-          shiftObject["firstUserName"] = newRow.firstUserName;
-          shiftObject["secondUserName"] = newRow.secondUserName;
-          shiftObject["thirdUserName"] = newRow.thirdUserName;
-          shiftObject["rows"].push(newRow);
+          shiftObject["interval"][row.interval] = [];
+          userList.value.forEach((user) => {
+            shiftObject["interval"][row.interval].push({
+              contractName: row.contractName,
+              dateTitle: row.dateTitle,
+              interval: row.interval,
+              serviceName: row.serviceName,
+              userName: user.name,
+              userValue: user.name === row.userName ? row.userValue : false,
+              week: row.week,
+            });
+            !shiftObject.headers.includes(user.name) &&
+              shiftObject.headers.push(user.name);
+          });
         });
         shiftBackup.push(shiftObject);
       });
@@ -189,10 +222,12 @@ export default defineComponent({
         // Construir payload
         let payload = [];
         shifts.value.forEach((item) => {
-          payload = payload.concat(item.rows);
+          Object.keys(item.interval).forEach((time) => {
+            payload = payload.concat(item.interval[time]);
+          });
         });
 
-        // Obtener contratos
+        // Enviar selección de turnos
         await app.$api.post(
           "shifts",
           { data: JSON.stringify(payload) },
@@ -232,6 +267,7 @@ export default defineComponent({
       generalState,
       shifts,
       store,
+      getRandomColor,
       updateWorkshift,
     };
   },
@@ -249,9 +285,6 @@ export default defineComponent({
   width: 00px;
   height: 230px;
 }
-.first-color {
-  background-color: $accent;
-}
 .negative-color {
   background-color: $red-5;
   color: black;
@@ -259,11 +292,5 @@ export default defineComponent({
 .positive-color {
   background-color: $green-12;
   color: black;
-}
-.second-color {
-  background-color: $primary;
-}
-.third-color {
-  background-color: $warning;
 }
 </style>
